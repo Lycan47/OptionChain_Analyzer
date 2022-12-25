@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from OI_Data import OI_Data
+from OI_Data import OI_Data_Indices
 from Logger import Logger
 from DataCleaner import DataCleaner as dc
 
@@ -24,7 +24,7 @@ st.sidebar.markdown("## Select Index, Expiry Date and enter current price")
 # -- Get list of events
 # Index input
 index_name = st.sidebar.radio("Select the Index",
-                             ('NIFTY', 'BANKNIFTY'))
+                              ('NIFTY', 'BANKNIFTY'))
 
 thursdays = dc.next_thursdays()
 
@@ -36,9 +36,9 @@ mktPrice = st.sidebar.number_input('Enter current market price:', step=100)
 
 # Add user enters Submit button on the sidebar, then execute
 if st.sidebar.button('Submit'):
-    oi_data = OI_Data(mktPrice, index_name, expiry_date)
+    oi_data = OI_Data_Indices(mktPrice, index_name, expiry_date)
     df_oi = oi_data.get_OI_data()
-    
+
     # Format values as integer instead float with .0000
     dc.format_value(df_oi)
 
@@ -49,8 +49,27 @@ if st.sidebar.button('Submit'):
     changeinPE_sum = df_oi['pe_changeinopeninterest'].sum()
     changeinCE_sum = df_oi['ce_changeinopeninterest'].sum()
 
-    st.table([
-    ['Change in PE Sum', round(changeinPE_sum, 2)],
-    ['Change in CE Sum', round(changeinCE_sum, 2)],
-    ['PCR', round(changeinPE_sum/changeinCE_sum, 2)]
-    ])
+    values = [
+        ['Change in PE Sum', changeinPE_sum],
+        ['Change in CE Sum', changeinCE_sum],
+        ['PCR', changeinPE_sum/changeinCE_sum]
+    ]
+
+    # Create a DataFrame with the values
+    df_predict = pd.DataFrame(values, columns=['Property', 'Value'])
+    # Format the values in the DataFrame
+    df_predict['Value'] = df_predict['Value'].map('{:,.2f}'.format)
+
+    # CSS to inject contained in a string
+    hide_table_row_index = """
+                <style>
+                thead tr th:first-child {display:none}
+                tbody th {display:none}
+                </style>
+                """
+
+    # Inject CSS with Markdown
+    st.markdown(hide_table_row_index, unsafe_allow_html=True)
+
+    # Print the DataFrame in a table, and specify the column formatting
+    st.table(df_predict)

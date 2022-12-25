@@ -25,6 +25,12 @@ class DataCleaner:
         df = df.drop(columns=['expirydate', 'pe_strikeprice', 'pe_expirydate', 'pe_underlying', 'pe_identifier', 'pe_pchangeinopeninterest', 'pe_change', 'pe_pchange', 'pe_totalbuyquantity', 'pe_totalsellquantity', 'pe_bidqty', 'pe_bidprice', 'pe_askqty', 'pe_askprice',
                      'pe_underlyingvalue', 'ce_strikeprice', 'ce_expirydate', 'ce_underlying', 'ce_identifier', 'ce_pchangeinopeninterest', 'ce_change', 'ce_pchange', 'ce_totalbuyquantity', 'ce_totalsellquantity', 'ce_bidqty', 'ce_bidprice', 'ce_askqty', 'ce_askprice', 'ce_underlyingvalue'], inplace=True)
 
+    def column_reindex(df):
+        # Reorder columns to make strike price in center
+        df = df.reindex(columns=['pe_openinterest',	'pe_changeinopeninterest',	'pe_totaltradedvolume',	'pe_impliedvolatility',	'pe_lastprice',
+                        'strikeprice', 'ce_lastprice', 'ce_impliedvolatility', 'ce_totaltradedvolume', 'ce_changeinopeninterest', 'ce_openinterest' ])
+        return df
+
     def next_thursdays():
         # Get the current date and time
         now = datetime.datetime.now()
@@ -45,13 +51,14 @@ class DataCleaner:
         for i in range(2):
             next_thursday = next_thursday + datetime.timedelta(7)
             thursdays.append(next_thursday.strftime('%d-%b-%Y'))
-        
+
         return thursdays
 
     def format_value(df):
-        columns = ['strikeprice',	'pe_openinterest',	'pe_changeinopeninterest',	'pe_totaltradedvolume',	'pe_impliedvolatility',	'pe_lastprice', 'ce_openinterest',	'ce_changeinopeninterest',	'ce_totaltradedvolume',	'ce_impliedvolatility',  'ce_lastprice']
+        columns = ['strikeprice',	'pe_openinterest',	'pe_changeinopeninterest',	'pe_totaltradedvolume',	'pe_impliedvolatility',
+                   'pe_lastprice', 'ce_openinterest',	'ce_changeinopeninterest',	'ce_totaltradedvolume',	'ce_impliedvolatility',  'ce_lastprice']
         for col in columns:
             if col == 'pe_lastprice' or col == 'ce_lastprice':
-                df[col] = df[col].apply(lambda x: round(x, 2))
+                df[col] = df[col].map('{:,.2f}'.format)
             else:
                 df[col] = df[col].apply(lambda x: int(round(x)))

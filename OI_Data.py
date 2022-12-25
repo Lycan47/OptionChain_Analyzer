@@ -5,7 +5,7 @@ from DataCleaner import DataCleaner as dc
 
 thursdays = dc.next_thursdays()
 
-class OI_Data:
+class OI_Data_Indices:
     def __init__(self,  marketPrice, index_name, expirydate=thursdays[0],  strikePriceCount=4):
         self.index_name = index_name
         self.marketPrice = marketPrice
@@ -55,5 +55,6 @@ class OI_Data:
         dc.reset_index(filtered_df)
 
         dc.column_drop(filtered_df)
+        filtered_df = dc.column_reindex(filtered_df)
 
         return filtered_df
