@@ -1,18 +1,20 @@
 import pandas as pd
-import json
 import requests
-from DataCleaner import DataCleaner as dc
+from bs4 import BeautifulSoup
+from DataModifier import DataModifier as dm
+import numpy as np
 
-thursdays = dc.next_thursdays()
+thursdays = dm.next_thursdays()
+
 
 class OI_Data_Indices:
-    def __init__(self,  marketPrice, index_name, expirydate=thursdays[0],  strikePriceCount=4):
-        self.index_name = index_name
-        self.marketPrice = marketPrice
+    def __init__(self,  ticker, expirydate=thursdays[0],  strikePriceCount=4):
+        self.ticker = ticker
         self.expirydate = expirydate
         self.strikePriceCount = strikePriceCount
 
     def get_OI_data(self):
+        # Set Headers and  cookies
         headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; '
                    'x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36'}
 
@@ -20,41 +22,77 @@ class OI_Data_Indices:
         response = requests.get(main_url, headers=headers)
         cookies = response.cookies
 
-        url = "https://www.nseindia.com/api/option-chain-indices?symbol=" + self.index_name
-        oi_data = requests.get(url, headers=headers, cookies=cookies)
+        # Set the URL of the option chain page
+        url = "https://www1.nseindia.com/live_market/dynaContent/live_watch/option_chain/optionKeys.jsp?symbolCode=-10002&symbol=" + \
+            self.ticker + "&symbol=" + self.ticker + \
+            "&instrument=-&date=-&segmentLink=17&symbolCount=2&segmentLink=17"
 
-        # Deserialize the response
-        data = oi_data.json()
+        # Send a GET request to the page
+        response = requests.get(url, headers=headers, cookies=cookies)
 
-        # Extract the desired Records data node
-        records = data['records']
+        # Parse the HTML data from the response
+        soup = BeautifulSoup(response.text, 'html.parser')
 
-        # Normalize the JSON data and create a DataFrame
-        df = pd.json_normalize(records['data'])
+        # Find the span element for extracting current market price
+        span_element = soup.find('span')
 
-        # Clean header
-        dc.clean_header(df)
-        
-        # Filter the data to only include rows where the 'CE.expirydate' column is equal to expiry
-        filtered_df = df[df['expirydate'] == self.expirydate]
+        marketPrice = dm.extract_mkt_price(span_element)
 
-        dc.reset_index(filtered_df)
+        # Find the table containing the option chain data
+        table = soup.find('table', {'id': 'octable'})
+
+        # Extract the rows from the table
+        table_rows = table.find_all('tr')
+
+        # Create an empty list to store the option chain data
+        data = []
+
+        # Iterate over the rows and extract the option chain data
+        l = []
+        for tr in table_rows:
+            td = tr.find_all('td')
+            if td:
+                row = [tr.text for tr in td]
+                l.append(row)
+
+        def np_float(x):
+            try:
+                y = x.lstrip().rstrip().replace(',', '')
+                return np.float64(y)
+            except:
+                return np.nan
+
+        arr = []
+        for r in l:
+            row = [np_float(x) for x in r]
+            arr.append(row)
+
+        df = pd.DataFrame(arr)
+        df.columns = ['ce_chart', 'ce_oi', 'ce_change_in_oi', 'ce_volume', 'ce_iv', 'ce_ltp', 'ce_net_change', 'ce_bid_qty', 'ce_bid_price', 'ce_ask_price', 'ce_ask_quantity',
+                      'strike_price', 'pe_bid_qty', 'pe_bid_price', 'pe_ask_price', 'pe_ask_qty', 'pe_net_change', 'pe_ltp', 'pe_iv', 'pe_volume', 'pe_change_in_oi', 'pe_oi', 'pe_chart']
+
+        # Drop unnecessary columns and rename them
+        df = dm.column_drop(df)
+        df = dm.column_rename(df)
 
         # Find the Strike Price increment interval
-        strikePriceDiff = dc.find_interval(filtered_df)
+        strikePriceDiff = dm.find_interval(df)
+
+        #  Convert Market price to nearest strike price
+        marketPrice = dm.round_off_mkt_price(marketPrice, strikePriceDiff)
 
         # OI range
         range = strikePriceDiff * self.strikePriceCount
 
         # Filtering the desired range of OI data
-        filtered_df = filtered_df[filtered_df['strikeprice'] >= (
-            self.marketPrice - range)]
-        filtered_df = filtered_df[filtered_df['strikeprice'] <= (
-            self.marketPrice + range)]
+        df = df[df['strikeprice'] >= (
+            marketPrice - range)]
+        df = df[df['strikeprice'] <= (
+            marketPrice + range)]
 
-        dc.reset_index(filtered_df)
+        # Converting the OI  Size to Lot size intead of per shares
+        df = dm.convert_oi_size(df, self.ticker)
 
-        dc.column_drop(filtered_df)
-        filtered_df = dc.column_reindex(filtered_df)
+        dm.reset_index(df)
 
-        return filtered_df
+        return df
