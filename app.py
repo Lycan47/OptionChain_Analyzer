@@ -22,9 +22,11 @@ st.markdown("""
 
 st.sidebar.markdown("## Select Index, Expiry Date and enter current price")
 # -- Get list of events
-# Index input
-ticker_name = st.sidebar.radio("Select the Index",
-                              ('NIFTY', 'BANKNIFTY', 'AXISBANK', 'ICICIBANK', 'HDFCBANK', 'SBIN', 'TATAPOWER'))
+# Ticker input
+tickers = ['NIFTY', 'BANKNIFTY', 'AXISBANK', 'ICICIBANK',
+           'HDFCBANK', 'SBIN', 'TATAPOWER', 'ICICIBANK', 'INDUSINDBK']
+
+ticker_name = st.sidebar.selectbox("Select the Ticker", tickers)
 
 thursdays = dm.next_thursdays()
 

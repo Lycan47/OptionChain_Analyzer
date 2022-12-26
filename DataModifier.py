@@ -3,7 +3,7 @@ import datetime
 import calendar
 
 LOT_SIZE = {"NIFTY": 50, "BANKNIFTY": 25, "AXISBANK": 1200,
-            "HDFCBANK": 550, "SBIN": 1500, "TATAPOWER": 3375}
+            "HDFCBANK": 550, "SBIN": 1500, "TATAPOWER": 3375, "ICICIBANK": 1375, "INDUSINDBK": 450}
 
 
 class DataModifier:
@@ -94,7 +94,7 @@ class DataModifier:
         marketPrice = parts[1]
 
         return float(marketPrice)
-    
+
     def round_off_mkt_price(marketPrice, strikePriceInterval):
         # Divide the number by strikePriceInterval
         rounded_number = round(marketPrice / strikePriceInterval)
