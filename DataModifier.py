@@ -3,7 +3,9 @@ import datetime
 import calendar
 
 LOT_SIZE = {"NIFTY": 50, "BANKNIFTY": 25, "AXISBANK": 1200,
-            "HDFCBANK": 550, "SBIN": 1500, "TATAPOWER": 3375, "ICICIBANK": 1375, "INDUSINDBK": 450}
+            "HDFCBANK": 550, "SBIN": 1500, "TATAPOWER": 3375,
+            "ICICIBANK": 1375, "INDUSINDBK": 450, "TATASTEEL": 5500,
+            "TVSMOTOR": 700, "HINDALCO": 1400}
 
 
 class DataModifier:
@@ -69,7 +71,7 @@ class DataModifier:
             if col == 'pe_lastprice' or col == 'ce_lastprice' or col == 'pe_impliedvolatility' or col == 'ce_impliedvolatility':
                 df[col] = df[col].map('{:,.2f}'.format)
             else:
-                df[col] = df[col].apply(lambda x: int(round(x)))
+                df[col] = df[col].apply(lambda x: int(round(x) if pd.notnull(x) else 0))
 
     def convert_oi_size(df, ticker):
         lot_size = LOT_SIZE[ticker]
