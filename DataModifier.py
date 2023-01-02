@@ -56,11 +56,23 @@ class DataModifier:
             next_thursday = now
 
         thursdays = []
-        thursdays.append(next_thursday.strftime('%d-%b-%Y'))
+        thursdays.append(next_thursday.strftime('%e-%b-%Y'))
 
         for i in range(2):
             next_thursday = next_thursday + datetime.timedelta(7)
-            thursdays.append(next_thursday.strftime('%d-%b-%Y'))
+            thursdays.append(next_thursday.strftime('%e-%b-%Y'))
+
+        for i in range(3):
+            # Split the string into separate parts
+            day, month, year = thursdays[i].split('-')
+
+            day = day.replace(' ', '')
+
+            # Convert the month to uppercase
+            month = month.upper()
+
+            # Concatenate the parts back together
+            thursdays[i] = f"{day}{month}{year}"
 
         return thursdays
 

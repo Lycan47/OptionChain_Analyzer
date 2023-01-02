@@ -22,11 +22,19 @@ class OI_Data_Indices:
         response = requests.get(main_url, headers=headers)
         cookies = response.cookies
 
-        # Set the URL of the option chain page
-        url = "https://www1.nseindia.com/live_market/dynaContent/live_watch/option_chain/optionKeys.jsp?symbolCode=-10002&symbol=" + \
-            self.ticker + "&symbol=" + self.ticker + \
-            "&instrument=-&date=-&segmentLink=17&symbolCount=2&segmentLink=17"
+        if self.ticker == 'NIFTY' or self.ticker == 'BANKNIFTY':
+            instrument = 'OPTIDX'
+            # Set the URL of the option chain page for INDEX
+            url = "https://www1.nseindia.com/live_market/dynaContent/live_watch/option_chain/optionKeys.jsp?segmentLink=17&instrument=" + \
+                instrument + "&symbol=" + self.ticker + "&date=" + self.expirydate
+        else:
+            instrument = 'OPTSTK'
+            # Set the URL of the option chain page for Equity
+            url = "https://www1.nseindia.com/live_market/dynaContent/live_watch/option_chain/optionKeys.jsp?symbolCode=-10002&symbol=" + \
+                self.ticker + "&symbol=" + self.ticker + \
+                "&instrument=-&date=-&segmentLink=17&symbolCount=2&segmentLink=17"
 
+        print(url)
         # Send a GET request to the page
         response = requests.get(url, headers=headers, cookies=cookies)
 
@@ -90,8 +98,8 @@ class OI_Data_Indices:
         df = df[df['strikeprice'] <= (
             marketPrice + range)]
 
-        # Converting the OI  Size to Lot size intead of per shares
-        df = dm.convert_oi_size(df, self.ticker)
+        # Converting the OI  Size to Lot size instead of per shares
+        # df = dm.convert_oi_size(df, self.ticker)
 
         dm.reset_index(df)
 
