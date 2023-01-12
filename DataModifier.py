@@ -5,7 +5,7 @@ import calendar
 LOT_SIZE = {"NIFTY": 50, "BANKNIFTY": 25, "AXISBANK": 1200,
             "HDFCBANK": 550, "SBIN": 1500, "TATAPOWER": 3375,
             "ICICIBANK": 1375, "INDUSINDBK": 450, "TATASTEEL": 5500,
-            "TVSMOTOR": 700, "HINDALCO": 1400}
+            "TVSMOTOR": 700, "HINDALCO": 1400, "LT": 300}
 
 
 class DataModifier:
