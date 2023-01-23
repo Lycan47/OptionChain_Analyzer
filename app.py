@@ -24,7 +24,7 @@ st.sidebar.markdown("## Select Index, Expiry Date and enter current price")
 # -- Get list of events
 # Ticker input
 tickers = ['NIFTY', 'BANKNIFTY', 'AXISBANK', 'ICICIBANK',
-           'HDFCBANK', 'SBIN', 'TATAPOWER', 'ICICIBANK', 'INDUSINDBK', 'TATASTEEL', 'TVSMOTOR', 'HINDALCO', 'LT']
+           'HDFCBANK', 'SBIN', 'TATAPOWER', 'KOTAKBANK', 'INDUSINDBK', 'TATASTEEL', 'TVSMOTOR', 'HINDALCO', 'LT']
 
 ticker_name = st.sidebar.selectbox("Select the Ticker", tickers)
 
