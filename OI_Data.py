@@ -26,8 +26,7 @@ class OI_Data_Indices:
             instrument = 'OPTIDX'
             # Set the URL of the option chain page for INDEX
             url = "https://www1.nseindia.com/live_market/dynaContent/live_watch/option_chain/optionKeys.jsp?segmentLink=17&instrument=" + \
-                instrument + "&symbol=" + self.ticker 
-                # + "&date=" + self.expirydate
+                instrument + "&symbol=" + self.ticker + "&date=" + self.expirydate
         else:
             instrument = 'OPTSTK'
             # Set the URL of the option chain page for Equity
