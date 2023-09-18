@@ -1,6 +1,4 @@
 import pandas as pd
-import datetime
-import calendar
 
 LOT_SIZE = {"NIFTY": 50, "BANKNIFTY": 25, "AXISBANK": 1200,
             "HDFCBANK": 550, "SBIN": 1500, "TATAPOWER": 3375,
@@ -17,14 +15,9 @@ class DataModifier:
         df.reset_index(drop=True, inplace=True)
 
     def find_interval(df):
-        length = len(df['strikeprice'])
-        print(df)
-        return (int(df.at[length//2, 'strikeprice']) - int(df.at[length//2-1, 'strikeprice']))
-
-    def column_drop(df):
-        df = df.drop(columns=['ce_chart', 'ce_net_change', 'ce_bid_qty', 'ce_bid_price', 'ce_ask_price',
-                     'ce_ask_quantity', 'pe_bid_qty', 'pe_bid_price', 'pe_ask_price', 'pe_ask_qty', 'pe_net_change', 'pe_chart'])
-        return df
+        length = len(df['strikePrice'])
+        # print(df)
+        return (int(df.at[length//2, 'strikePrice']) - int(df.at[length//2-1, 'strikePrice']))
 
     def column_rename(df):
         # Rename columns
@@ -33,48 +26,13 @@ class DataModifier:
                                 'ce_volume': 'ce_totaltradedvolume',
                                 'ce_iv': 'ce_impliedvolatility',
                                 'ce_ltp': 'ce_lastprice',
-                                'strike_price': 'strikeprice',
+                                'strike_price': 'strikePrice',
                                 'pe_ltp': 'pe_lastprice',
                                 'pe_iv': 'pe_impliedvolatility',
                                 'pe_volume': 'pe_totaltradedvolume',
                                 'pe_change_in_oi': 'pe_changeinopeninterest',
                                 'pe_oi': 'pe_openinterest'})
         return df
-
-    def next_thursdays():
-        # Get the current date and time
-        now = datetime.datetime.now()
-
-        # Get the day of the week for the current date
-        day_of_week = calendar.day_name[now.weekday()]
-
-        # Check if the current day is Thursday
-        if day_of_week != 'Thursday':
-            # Change the date to the next Thursday
-            next_thursday = now + datetime.timedelta((3-now.weekday()) % 7)
-        else:
-            next_thursday = now
-
-        thursdays = []
-        thursdays.append(next_thursday.strftime('%e-%b-%Y'))
-
-        for i in range(2):
-            next_thursday = next_thursday + datetime.timedelta(7)
-            thursdays.append(next_thursday.strftime('%e-%b-%Y'))
-
-        for i in range(3):
-            # Split the string into separate parts
-            day, month, year = thursdays[i].split('-')
-
-            day = day.replace(' ', '')
-
-            # Convert the month to uppercase
-            month = month.upper()
-
-            # Concatenate the parts back together
-            thursdays[i] = f"{day}{month}{year}"
-
-        return thursdays
 
     def format_value(df):
         columns = ['pe_openinterest', 'pe_changeinopeninterest', 'pe_totaltradedvolume', 'pe_impliedvolatility',
@@ -94,24 +52,69 @@ class DataModifier:
 
         return df
 
-    def extract_mkt_price(span_element):
-        # Find the b element within the span element
-        b_element = span_element.find('b')
-
-        # Extract the text from the b element
-        text = b_element.text
-
-        # Split the text by the space character
-        parts = text.split(' ')
-
-        # Extract the second element of the list
-        marketPrice = parts[1]
-
-        return float(marketPrice)
-
     def round_off_mkt_price(marketPrice, strikePriceInterval):
         # Divide the number by strikePriceInterval
         rounded_number = round(marketPrice / strikePriceInterval)
 
         # Multiply the rounded number by strikePriceInterval to get the nearest multiple of strikePriceInterval
         return (rounded_number * strikePriceInterval)
+
+
+    def data_extractor(df, expiryDate, marketPrice):
+        strikePriceCount = 8
+        # Filter the data to only include rows where the 'CE.expiryDate' column is equal to expiry
+        filtered_df = df[df['expiryDate'] == expiryDate]
+        filtered_df.reset_index(drop=True, inplace=True)
+                
+        # Find the Strike Price increment interval
+        strikePriceDiff = DataModifier.find_interval(filtered_df)
+        print(strikePriceDiff)
+        #  Convert Market price to nearest strike price
+        marketPrice = DataModifier.round_off_mkt_price(marketPrice, strikePriceDiff)
+
+        # OI range
+        range = strikePriceDiff * strikePriceCount
+
+        # Filtering the desired range of OI data
+        filtered_df = filtered_df[filtered_df['strikePrice'] >= (
+            marketPrice - range)]
+        filtered_df = filtered_df[filtered_df['strikePrice'] <= (
+            marketPrice + range)]
+
+        # Drop unnecessary columns
+        filtered_df = filtered_df.drop(columns=['expiryDate', 'PE.strikePrice', 'PE.expiryDate', 'PE.underlying', 'PE.identifier', 
+                                                'PE.pchangeinOpenInterest', 'PE.change', 'PE.pChange', 'PE.totalBuyQuantity', 
+                                                'PE.totalSellQuantity', 'PE.bidQty', 'PE.bidprice', 'PE.askQty', 'PE.askPrice', 
+                                                'PE.underlyingValue', 'CE.strikePrice', 'CE.expiryDate', 'CE.underlying', 
+                                                'CE.identifier', 'CE.pchangeinOpenInterest', 'CE.change', 'CE.pChange', 
+                                                'CE.totalBuyQuantity', 'CE.totalSellQuantity', 'CE.bidQty', 'CE.bidprice', 
+                                                'CE.askQty', 'CE.askPrice', 'CE.underlyingValue'])
+        
+        # Converting the OI  Size to Lot size instead of per shares
+        # df = convert_oi_size(df, self.ticker)
+
+        filtered_df.columns = filtered_df.columns.str.strip().str.lower() \
+            .str.replace('.', '_').str.replace('(', '').str.replace(')', '').str.replace(' ', '_')
+
+        # Reset the index
+        DataModifier.reset_index(filtered_df)
+        # print(filtered_df)
+
+        # Rename the colunms
+        # filtered_df = DataModifier.column_rename(filtered_df)
+
+        # Reorder the columns
+        filtered_df = filtered_df[['ce_openinterest',
+                                'ce_changeinopeninterest',
+                                'ce_totaltradedvolume',
+                                'ce_impliedvolatility',
+                                'ce_lastprice',
+                                'strikeprice',
+                                'pe_lastprice',
+                                'pe_impliedvolatility',
+                                'pe_totaltradedvolume',
+                                'pe_changeinopeninterest',
+                                'pe_openinterest']]
+        
+        return filtered_df
+        

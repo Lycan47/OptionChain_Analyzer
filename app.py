@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from OI_Data import OI_Data_Indices
+from OI_Data import OI_Data
 from Logger import Logger
 from DataModifier import DataModifier as dm
 
@@ -23,26 +23,23 @@ st.markdown("""
 st.sidebar.markdown("## Select Index, Expiry Date and enter current price")
 # -- Get list of events
 # Ticker input
-tickers = ['NIFTY', 'BANKNIFTY', 'AXISBANK', 'ICICIBANK',
+tickers = ['NIFTY', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'AXISBANK', 'ICICIBANK',
            'HDFCBANK', 'SBIN', 'TATAPOWER', 'KOTAKBANK', 'INDUSINDBK', 'TATASTEEL', 'TVSMOTOR', 'HINDALCO', 'LT']
 
 ticker_name = st.sidebar.selectbox("Select the Ticker", tickers)
 
-thursdays = dm.next_thursdays()
+oi_data, expiryDates, marketPrice = OI_Data.get_OI_data(ticker_name)
+# print(expiryDates, marketPrice)
 
 # Select Expiry Date
-expiry_date = st.sidebar.selectbox('Expiry date:', thursdays)
+expiryDate = st.sidebar.selectbox('Expiry date:', expiryDates)
 
 # Take Current Market Price input from the user
 # mktPrice = st.sidebar.number_input('Enter current market price:', step=100)
 
 # Add user enters Submit button on the sidebar, then execute
 if st.sidebar.button('Submit'):
-    oi_data = OI_Data_Indices(ticker_name, expiry_date)
-    df_oi = oi_data.get_OI_data()
-
-    # Format values as integer instead float with .0000
-    dm.format_value(df_oi)
+    df_oi = dm.data_extractor(oi_data, expiryDate, marketPrice)
 
     # Display the dataframe as a table
     st.table(df_oi)
