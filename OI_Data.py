@@ -3,7 +3,7 @@ import requests
 import json
 
 
-class OI_Data:
+class OI_Data_ticker:
     def __init__(self) -> None:
         pass
 

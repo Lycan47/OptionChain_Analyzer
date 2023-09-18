@@ -43,6 +43,7 @@ class DataModifier:
             else:
                 df[col] = df[col].apply(lambda x: int(round(x) if pd.notnull(x) else 0))
 
+    
     def convert_oi_size(df, ticker):
         lot_size = LOT_SIZE[ticker]
         columns = ['pe_openinterest', 'pe_changeinopeninterest',
@@ -52,6 +53,7 @@ class DataModifier:
 
         return df
 
+        
     def round_off_mkt_price(marketPrice, strikePriceInterval):
         # Divide the number by strikePriceInterval
         rounded_number = round(marketPrice / strikePriceInterval)

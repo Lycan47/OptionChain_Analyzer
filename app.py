@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from OI_Data import OI_Data
+from OI_Data import OI_Data_ticker
 from Logger import Logger
 from DataModifier import DataModifier as dm
 
@@ -28,7 +28,7 @@ tickers = ['NIFTY', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'AXISBANK', 'ICICIBAN
 
 ticker_name = st.sidebar.selectbox("Select the Ticker", tickers)
 
-oi_data, expiryDates, marketPrice = OI_Data.get_OI_data(ticker_name)
+oi_data, expiryDates, marketPrice = OI_Data_ticker.get_OI_data(ticker_name)
 # print(expiryDates, marketPrice)
 
 # Select Expiry Date
@@ -41,6 +41,9 @@ expiryDate = st.sidebar.selectbox('Expiry date:', expiryDates)
 if st.sidebar.button('Submit'):
     df_oi = dm.data_extractor(oi_data, expiryDate, marketPrice)
 
+     # Format values as integer instead float with .0000
+    dm.format_value(df_oi)
+    
     # Display the dataframe as a table
     st.table(df_oi)
 
